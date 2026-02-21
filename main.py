@@ -39,25 +39,18 @@ while running:
 
     # Flip for mirror view
     frame = cv2.flip(frame, 1)
-
-    # Convert to RGB
     rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-
-    # Detect hands
     results = hands.process(rgb_frame)
 
-    # Draw full hand landmarks directly on frame
+    # Draw hand landmarks directly on frame
     if results.multi_hand_landmarks:
         for hand_landmarks in results.multi_hand_landmarks:
 
-            # Draw all 21 points and connections
             mp_draw.draw_landmarks(
                 frame,
                 hand_landmarks,
                 mp_hands.HAND_CONNECTIONS
             )
-
-            # Get palm center landmark (point 9)
             h, w, _ = frame.shape
             palm = hand_landmarks.landmark[9]
 
@@ -67,7 +60,7 @@ while running:
             # Draw center point
             cv2.circle(frame, (cx, cy), 10, (0, 255, 0), -1)
 
-    # Convert frame to pygame surface
+    # Converting frame to pygame surface
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     frame = pygame.surfarray.make_surface(frame)
     frame = pygame.transform.rotate(frame, -90)
