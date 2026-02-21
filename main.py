@@ -1,41 +1,79 @@
 import pygame
 import cv2
+import mediapipe as mp
 
+# Initialize pygame
 pygame.init()
 
-# Game Window
-width = 800
-height = 600
+WIDTH = 800
+HEIGHT = 600
 
-screen = pygame.display.set_mode((width,height))
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Reflexa")
 
+# Initialize camera
 cap = cv2.VideoCapture(0)
 
-if not cap.isOpened():
-    print("Camera Not Detected")
-    exit()
+# Initialize mediapipe
+mp_hands = mp.solutions.hands
+mp_draw = mp.solutions.drawing_utils
 
-# Game loop variable
+hands = mp_hands.Hands(
+    max_num_hands=1,
+    min_detection_confidence=0.7,
+    min_tracking_confidence=0.7
+)
+
 running = True
 
-# Main game loop
 while running:
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-               
+
     ret, frame = cap.read()
-    if ret:
-        frame = cv2.flip(frame, 1)
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        frame = pygame.surfarray.make_surface(frame)
-        # Rotating frame to correc orientation
-        frame = pygame.transform.rotate(frame, -90)
 
-        frame = pygame.transform.scale(frame, (width,height))
+    if not ret:
+        continue
 
-        screen.blit(frame, (0, 0))
+    # Flip for mirror view
+    frame = cv2.flip(frame, 1)
+
+    # Convert to RGB
+    rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+    # Detect hands
+    results = hands.process(rgb_frame)
+
+    # Draw full hand landmarks directly on frame
+    if results.multi_hand_landmarks:
+        for hand_landmarks in results.multi_hand_landmarks:
+
+            # Draw all 21 points and connections
+            mp_draw.draw_landmarks(
+                frame,
+                hand_landmarks,
+                mp_hands.HAND_CONNECTIONS
+            )
+
+            # Get palm center landmark (point 9)
+            h, w, _ = frame.shape
+            palm = hand_landmarks.landmark[9]
+
+            cx = int(palm.x * w)
+            cy = int(palm.y * h)
+
+            # Draw center point
+            cv2.circle(frame, (cx, cy), 10, (0, 255, 0), -1)
+
+    # Convert frame to pygame surface
+    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    frame = pygame.surfarray.make_surface(frame)
+    frame = pygame.transform.rotate(frame, -90)
+    frame = pygame.transform.scale(frame, (WIDTH, HEIGHT))
+
+    screen.blit(frame, (0, 0))
 
     pygame.display.update()
 
