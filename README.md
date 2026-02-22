@@ -37,6 +37,8 @@ if they move their hand in a different direction than the arrow, They Score.
 3. Install depedencies (pip install pygame opencv-pthon mediapipe)
 4. Run the game (main.py)
 
+---
+
 ## Future Improvements
 
 - Polished and refined UI
