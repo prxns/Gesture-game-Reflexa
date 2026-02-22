@@ -6,6 +6,17 @@ import random
 # Initialize pygame
 pygame.init()
 
+arrow_images = {
+    "UP": pygame.image.load("assets/arrow_up.png"),
+    "DOWN": pygame.image.load("assets/arrow_down.png"),
+    "RIGHT": pygame.image.load("assets/arrow_right.png"),
+    "LEFT": pygame.image.load("assets/arrow_left.png"),
+}
+for key in arrow_images:
+    arrow_images[key] = pygame.transform.scale(arrow_images[key], (200, 200))
+
+title_font = pygame.font.SysFont("Ariel", 60)
+
 WIDTH = 1080
 HEIGHT = 720
 
@@ -56,6 +67,10 @@ game_over = False
 clock = pygame.time.Clock()
 
 # Game loop
+screen.fill((18, 18, 28))
+title_surface = title_font.render("Reflexa", True, (120, 200, 255))
+screen.blit(title_surface, (WIDTH // 2 - 150, 20))
+
 running = True
 
 while running:
@@ -140,9 +155,11 @@ while running:
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     frame = pygame.surfarray.make_surface(frame)
     frame = pygame.transform.rotate(frame, -90)
-    frame = pygame.transform.scale(frame, (WIDTH, HEIGHT))
+    camera_width = 320
+    camera_height = 240
+    frame = pygame.transform.scale(frame, (camera_width, camera_height))
 
-    screen.blit(frame, (0, 0))
+    screen.blit(frame, (WIDTH - camera_width - 20, HEIGHT - camera_height - 20))
 
     # Arrow Spawn System
     current_time = pygame.time.get_ticks()
@@ -163,11 +180,11 @@ while running:
 
     # Displaying Arrow
     if arrow_direction is not None:
-        arrow_text = font.render(f"SHOW: {arrow_direction}", True, (255, 255, 0))
-        screen.blit(arrow_text, (WIDTH // 2 - 120, 50))
+        selected_image = arrow_images[arrow_direction]
+        screen.blit(selected_image, (WIDTH // 2 - 100, HEIGHT // 2 - 100))
     # Display Score
-    score_text = font.render(f"SCORE: {score}", True, (0, 255, 0))
-    screen.blit(score_text, (30, HEIGHT - 60))
+    score_text = font.render(f"Score: {score}", True, (255, 255, 255))
+    screen.blit(score_text, (30, 30))
     # Game Over Display
     if game_over:
         over_text = font.render("GAME OVER!", True, (255, 0, 0))
