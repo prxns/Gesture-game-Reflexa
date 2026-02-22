@@ -45,7 +45,7 @@ if they move their hand in a different direction than the arrow, They Score.
 - Visual themes and customization
 - Package as a standalone executable (.exe) for full game application release
 
---
+---
 
 ## License
 
