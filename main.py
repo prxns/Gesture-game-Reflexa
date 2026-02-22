@@ -57,9 +57,7 @@ def is_fist_closed(hand_landmarks):
             folded += 1
     return folded >= 3
 
-
-# ---------------- GAME SYSTEM ----------------
-
+# Game System
 game_state = "MENU"
 
 score = 0
@@ -100,13 +98,13 @@ while running:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 score = 0
                 direction = "NONE"
+                current_hand_direction = "NONE"
                 fist_ready = False
                 praise_text = ""
                 arrow_direction = None
                 pygame.mixer.music.stop()
                 game_state = "MENU"
 
-    # Always read camera
     ret, frame = cap.read()
     if not ret:
         continue
@@ -147,7 +145,7 @@ while running:
                     direction = "DOWN"
                     current_hand_direction = "DOWN"
                     fist_ready = False
-                elif dy < -threshold:
+                elif dy < -threshold * 0.8: # Made up slightly more sensitive
                     direction = "UP"
                     current_hand_direction = "UP"
                     fist_ready = False
@@ -159,7 +157,7 @@ while running:
     frame = pygame.transform.scale(frame, (320, 240))
     screen.blit(frame, (WIDTH - 340, HEIGHT - 260))
 
-    # ---------------- MENU ----------------
+    # MENU
     if game_state == "MENU":
         title_surface = title_font.render("Reflexa", True, (120, 200, 255))
         screen.blit(title_surface, (WIDTH // 2 - 150, 150))
@@ -167,7 +165,7 @@ while running:
         start_surface = font.render("CLICK TO START", True, (0, 255, 200))
         screen.blit(start_surface, (WIDTH // 2 - 150, HEIGHT // 2))
 
-    # ---------------- COUNTDOWN ----------------
+    # COUNTDOWN
     elif game_state == "COUNTDOWN":
 
         elapsed = current_time - music_start_time
@@ -189,14 +187,13 @@ while running:
             count_surface = title_font.render(text, True, (255, 255, 255))
             screen.blit(count_surface, (WIDTH // 2 - 150, HEIGHT // 2))
 
-    # ---------------- PLAYING ----------------
+    # Play
     elif game_state == "PLAYING":
 
-        if current_time >= next_beat_time:
-
+        # --- PERFECT BEAT SNAP FIX ---
+        while current_time >= next_beat_time:
             arrow_direction = random.choice(["UP", "DOWN", "LEFT", "RIGHT"])
             current_beat_time = next_beat_time
-
             next_beat_time += beat_interval
 
         # Draw arrow
@@ -209,34 +206,28 @@ while running:
             )
 
         # Input check
-        if arrow_direction:
+        if arrow_direction and current_hand_direction in ["UP", "DOWN", "LEFT", "RIGHT"]:
 
-            if current_hand_direction != arrow_direction:
+            time_since_drop = current_time - current_beat_time
 
-                time_since_drop = current_time - current_beat_time
+            if abs(time_since_drop) <= hit_window:
 
-                if abs(time_since_drop) <= hit_window:
-
-                    if direction != arrow_direction:
-                        score += 1
-                        praise_text = random.choice([
-                            "Nice!",
-                            "Keep Going!",
-                            "You're Doing Great!",
-                            "Smooth!",
-                            "Perfect!"
-                        ])
-                        praise_timer = current_time
-                        arrow_direction = None
-                    else:
-                        game_state = "GAME_OVER"
-                        pygame.mixer.music.stop()
-
-                elif time_since_drop > hit_window:
+                if current_hand_direction != arrow_direction:
+                    score += 1
+                    praise_text = random.choice(
+                        ["Nice!", "Keep Going!", "You're Doing Great!", "Smooth!", "Perfect!"]
+                    )
+                    praise_timer = current_time
+                    arrow_direction = None
+                else:
                     game_state = "GAME_OVER"
                     pygame.mixer.music.stop()
 
-            direction = "NONE"
+            elif time_since_drop > hit_window:
+                game_state = "GAME_OVER"
+                pygame.mixer.music.stop()
+
+            current_hand_direction = "NONE"
 
     # Praise display
     if praise_text:
@@ -246,7 +237,7 @@ while running:
         else:
             praise_text = ""
 
-    # ---------------- GAME OVER ----------------
+    # GAME OVER
     if game_state == "GAME_OVER":
         overlay = pygame.Surface((WIDTH, HEIGHT))
         overlay.set_alpha(120)
