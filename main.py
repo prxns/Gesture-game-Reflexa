@@ -1,12 +1,13 @@
 import pygame
 import cv2
 import mediapipe as mp
+import random
 
 # Initialize pygame
 pygame.init()
 
-WIDTH = 800
-HEIGHT = 600
+WIDTH = 1080
+HEIGHT = 720
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Reflexa")
@@ -45,6 +46,14 @@ def is_fist_closed(hand_landmarks):
 
     return folded >= 3
 
+arrow_direction = None
+arrow_spawn_time = 0
+arrow_duration = 1500
+
+score = 0
+game_over = False
+
+clock = pygame.time.Clock()
 
 # Game loop
 running = True
@@ -54,6 +63,9 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                running = False
 
     ret, frame = cap.read()
 
@@ -132,10 +144,37 @@ while running:
 
     screen.blit(frame, (0, 0))
 
+    # Arrow Spawn System
+    current_time = pygame.time.get_ticks()
+    if arrow_direction is None and not game_over:
+        arrow_direction = random.choice(["UP", "DOWN", "RIGHT", "LEFT"])
+        arrow_spawn_time = current_time
+    # Arrow Timeout
+    if arrow_direction is not None and not game_over:
+        if direction == arrow_direction:
+            game_over = True
+        elif direction in ["UP", "DOWN", "LEFT", "RIGHT"] and not fist_ready:
+            score += 1
+            arrow_direction = None
+            direction = "NONE"
+
     text_surface = font.render(direction, True, (0, 255, 0))
     screen.blit(text_surface, (30, 30))
 
+    # Displaying Arrow
+    if arrow_direction is not None:
+        arrow_text = font.render(f"SHOW: {arrow_direction}", True, (255, 255, 0))
+        screen.blit(arrow_text, (WIDTH // 2 - 120, 50))
+    # Display Score
+    score_text = font.render(f"SCORE: {score}", True, (0, 255, 0))
+    screen.blit(score_text, (30, HEIGHT - 60))
+    # Game Over Display
+    if game_over:
+        over_text = font.render("GAME OVER!", True, (255, 0, 0))
+        screen.blit(over_text, (WIDTH // 2 - 120, HEIGHT // 2))
+
     pygame.display.update()
+    clock.tick(60)
 
 cap.release()
 pygame.quit()
